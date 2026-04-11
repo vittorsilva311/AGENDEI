@@ -1,0 +1,7 @@
+Linguagem em que instalei :
+
+npm install next@14  = next da versão  14 
+frameworks
+
+
+npm install prisma -save-dev = prisma   /* é uma ORM para interagir melhor com o banco
