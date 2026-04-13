@@ -1,3 +1,17 @@
+-[x] setup do banco de dados e criação dos modelos de usuário, barbearia, serviço e agendamento usando o Prisma ORM.
+-[] seeding do banco de dados para popular as tabelas com dados iniciais.
+-[] implementação das rotas de API para criar, ler, atualizar e deletar usuários, barbearias, serviços e agendamentos.
+-[] desenvolvimento da interface de usuário para permitir que os usuários façam agendamentos, visualizem seus agendamentos e gerenciem suas informações.
+-[] testes para garantir que todas as funcionalidades estejam funcionando corretamente e que os dados estejam sendo armazenados e recuperados do banco de dados de forma adequada.
+-[] documentação do código e do processo de desenvolvimento para facilitar a manutenção futura e a colaboração com outros desenvolvedores.
+-[] git para controle de versão e colaboração com outros desenvolvedores, garantindo que todas as alterações sejam registradas e possam ser revertidas se necessário.
+
+
+
+
+
+
+
 Linguagem em que instalei :
 
 npm install next@14  = next da versão  14 
