@@ -1,0 +1,5 @@
+/* oque estou fazendo é se o arquivo for do tipo .ts ou .tsx, ele irá rodar o eslint para corrigir os erros e depois o prettier para formatar o código. */
+
+{
+  "*.ts?(x)": ["eslint --fix", "prettier --write"]
+}

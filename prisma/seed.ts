@@ -11,6 +11,12 @@ const prisma = new PrismaClient({ adapter });
 
 async function seedDatabase() {
   try {
+    // Limpa os dados existentes antes de inserir
+    await prisma.booking.deleteMany()
+    await prisma.service.deleteMany()
+    await prisma.barbershop.deleteMany()
+    console.log("Dados anteriores removidos.")
+
     const images = [
       "https://utfs.io/f/c97a2dc9-cf62-468b-a851-bfd2bdde775f-16p.png",
       "https://utfs.io/f/45331760-899c-4b4b-910e-e00babb6ed81-16q.png",
@@ -100,7 +106,7 @@ async function seedDatabase() {
         data: {
           name,
           address,
-          imagemURL: imageUrl,
+          imageUrl: imageUrl,
           phones: ["(11) 99999-9999", "(11) 99999-9999"],
           description: "Barbearia de alta qualidade com profissionais experientes e ambiente acolhedor.",
         },
@@ -112,7 +118,7 @@ async function seedDatabase() {
             name: service.name,
             description: service.description,
             price: service.price,
-            imagemURL: service.imageUrl,
+            imageUrl: service.imageUrl,
             barbershopId: barbershop.id, 
           },
         });

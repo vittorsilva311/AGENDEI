@@ -1,74 +1,177 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// prisma/schema.prisma
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
-  engineType = "binary"
 }
 
 datasource db {
   provider = "postgresql"
-
 }
 
-/*
-aqui tem que ser criado o model de usuário, onde serão armazenadas as informações sobre cada usuário.
-*/
+enum UserRole {
+  ADMIN
+  OWNER
+  EMPLOYEE
+  CUSTOMER
+}
+
+enum PaymentMethod {
+  CARD
+  PIX
+  CASH
+}
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  bookings   booking[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String               @id @default(cuid())
+  name             String?
+  email            String?              @unique
+  emailVerified    DateTime?
+  image            String?
+  password         String?
+  role             UserRole             @default(CUSTOMER)
+  accounts         Account[]
+  sessions         Session[]
+  bookings         Booking[]
+  reviews          Review[]
+  ownedBarbershops Barbershop[]         @relation("BarbershopOwner")
+  employeeProfile  BarbershopEmployee?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 }
 
-/*
-aqui tem que ser criado o model de barbearia, onde serão armazenadas as informações sobre cada barbearia.
-*/
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
 
 model Barbershop {
-  id        String   @id @default(uuid())
-  name      String
-  address   String
-  phones    String[]
-  description String
-  imagemURL String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  services   Service[]
-}
-
-/*
-aqui tem que ser criado o model de serviço, onde tem a relação entre o serviço e a barbearia.
-
-*/
-model Service {
-  id          String   @id @default(uuid())
+  id          String               @id @default(cuid())
   name        String
+  address     String
+  phones      String[]
   description String
-  imagemURL   String
-  price       Decimal @db.Decimal(10, 2)
-  barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
-   bookings     booking[]
+  imageUrl    String               @map("imagemURL")
+  openTime    String               @default("08:00")
+  closeTime   String               @default("19:00")
+  workingDays Int[]                @default([1, 2, 3, 4, 5, 6])
+  lat         Float?
+  lng         Float?
+  ownerId     String?
+  owner       User?                @relation("BarbershopOwner", fields: [ownerId], references: [id])
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  services    Service[]
+  employees   BarbershopEmployee[]
+  invitations Invitation[]
+  reviews     Review[]
 }
 
-/* aqui tem que ser criado o model de booking, onde tem a relação entre o usuário, 
-o serviço e a data do agendamento. O usuário pode ter vários agendamentos, e cada agendamento está relacionado a um serviço específico. 
-O modelo de booking deve conter os campos necessários para armazenar essas informações, como userId, serviceId, date, createdAt e updatedAt.
- Além disso, deve haver uma relação entre o modelo de booking e os modelos de User e Service para garantir a integridade dos dados.*/
-model booking {
-  id          String   @id @default(uuid())
-  userId      String
-  serviceId   String
-  date        DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User    @relation(fields: [userId], references: [id])
-  service     Service @relation(fields: [serviceId], references: [id])
+model Invitation {
+  id           String     @id @default(cuid())
+  email        String
+  ownerName    String
+  token        String     @unique
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime   @default(now())
+}
+
+model BarbershopEmployee {
+  id           String                @id @default(cuid())
+  name         String
+  imageUrl     String?
+  specialty    String?
+  inviteToken       String?               @unique
+  inviteTokenExpiry DateTime?
+  barbershopId String
+  barbershop   Barbershop            @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  userId       String?               @unique
+  user         User?                 @relation(fields: [userId], references: [id])
+  bookings     Booking[]
+  blockedSlots EmployeeBlockedSlot[]
+  createdAt    DateTime              @default(now())
+}
+
+model EmployeeBlockedSlot {
+  id         String             @id @default(cuid())
+  employeeId String
+  date       DateTime
+  employee   BarbershopEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  createdAt  DateTime           @default(now())
+
+  @@unique([employeeId, date])
+}
+
+model Service {
+  id              String     @id @default(cuid())
+  name            String
+  description     String
+  imageUrl        String     @map("imagemURL")
+  price           Decimal    @db.Decimal(10, 2)
+  durationMinutes Int        @default(30)
+  active          Boolean    @default(true)
+  barbershopId    String
+  barbershop      Barbershop @relation(fields: [barbershopId], references: [id])
+  bookings        Booking[]
+}
+
+model Booking {
+  id            String              @id @default(cuid())
+  userId        String
+  serviceId     String
+  date          DateTime
+  paymentMethod PaymentMethod?
+  employeeId    String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  user          User                @relation(fields: [userId], references: [id])
+  service       Service             @relation(fields: [serviceId], references: [id])
+  employee      BarbershopEmployee? @relation(fields: [employeeId], references: [id])
+  review        Review?
+
+  @@map("booking")
+}
+
+model Review {
+  id           String     @id @default(cuid())
+  bookingId    String     @unique
+  userId       String
+  barbershopId String
+  rating       Int
+  comment      String?
+  createdAt    DateTime   @default(now())
+  booking      Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id])
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
 }
